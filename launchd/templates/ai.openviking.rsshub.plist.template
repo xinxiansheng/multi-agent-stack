@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>ai.openviking.rsshub</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>__HOMEBREW_PREFIX__/bin/node</string>
+        <string>__HOME__/projects/rsshub/dist/index.mjs</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>__HOME__/.openclaw/logs/rsshub.log</string>
+    <key>StandardErrorPath</key>
+    <string>__HOME__/.openclaw/logs/rsshub.err.log</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>HOME</key>
+        <string>__HOME__</string>
+        <key>PATH</key>
+        <string>__HOMEBREW_PREFIX__/bin:/usr/local/bin:/usr/bin:/bin</string>
+        <key>NODE_ENV</key>
+        <string>production</string>
+        <key>PORT</key>
+        <string>__RSSHUB_PORT__</string>
+        <key>NODE_OPTIONS</key>
+        <string>--max-http-header-size=32768</string>
+    </dict>
+</dict>
+</plist>

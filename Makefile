@@ -14,14 +14,33 @@ help:
 	@echo ""
 	@echo "Usage: make <target>"
 	@echo ""
-	@echo "  setup       — Full bootstrap (first-time install)"
-	@echo "  status      — Check all services status"
-	@echo "  logs        — Tail recent gateway logs"
-	@echo "  restart     — Restart gateway service"
-	@echo "  backup      — Backup config and workspaces"
-	@echo "  restore     — Restore from latest backup"
-	@echo "  teardown    — Remove all services (keeps data)"
-	@echo "  new-agent   — Scaffold a new agent (interactive)"
+	@echo "  Deployment:"
+	@echo "    setup            Full bootstrap (first-time install)"
+	@echo "    setup-openviking Setup OpenViking separately"
+	@echo "    config           Regenerate openclaw.json from .env"
+	@echo "    teardown         Remove all services (keeps data)"
+	@echo ""
+	@echo "  Operations:"
+	@echo "    status           Check all services & subsystems"
+	@echo "    logs             Tail recent gateway logs"
+	@echo "    logs-follow      Stream gateway logs in real-time"
+	@echo "    restart          Restart gateway service"
+	@echo "    backup           Backup config and workspaces"
+	@echo "    restore          Restore from latest backup"
+	@echo ""
+	@echo "  Observer Pipeline:"
+	@echo "    collect          Run collection (23% sampling)"
+	@echo "    collect-full     Run collection (all sources)"
+	@echo "    daily            Generate daily briefing"
+	@echo "    briefing         Push morning briefing via Telegram"
+	@echo ""
+	@echo "  Knowledge Base:"
+	@echo "    sync             Sync agent memory to OpenViking"
+	@echo "    ingest           Batch index all knowledge"
+	@echo "    search q=\"...\"   Semantic search in knowledge base"
+	@echo ""
+	@echo "  Agent Development:"
+	@echo "    new-agent        Scaffold a new agent (interactive)"
 	@echo ""
 
 # Full bootstrap
@@ -107,3 +126,36 @@ new-agent:
 # Regenerate config from .env
 config:
 	@bash $(STACK_DIR)/config/generate-config.sh
+
+# Run Observer collection manually
+collect:
+	@echo "Running Observer collection..."
+	@cd $(OPENCLAW_HOME)/workspace-observer/scripts && python3 collect.py
+
+# Run Observer collection (full, no sampling)
+collect-full:
+	@cd $(OPENCLAW_HOME)/workspace-observer/scripts && python3 collect.py --full
+
+# Generate daily briefing
+daily:
+	@cd $(OPENCLAW_HOME)/workspace-observer/scripts && python3 daily.py
+
+# Run morning briefing
+briefing:
+	@bash $(OPENCLAW_HOME)/scripts/morning-briefing.sh
+
+# Run memory sync to OpenViking
+sync:
+	@cd $(HOME)/projects/openviking-local && source .venv/bin/activate && python memory-sync.py
+
+# Run batch ingest to OpenViking
+ingest:
+	@cd $(HOME)/projects/openviking-local && source .venv/bin/activate && python ingest.py
+
+# Search OpenViking (usage: make search q="AI Agent")
+search:
+	@$(HOME)/projects/openviking-local/ov-search.sh "$(q)"
+
+# Setup OpenViking separately
+setup-openviking:
+	@bash $(STACK_DIR)/openviking/setup.sh

@@ -1,0 +1,26 @@
+# ============================================================
+# Web Scraper Source Configs (requires beautifulsoup4)
+# ============================================================
+# Each source defines CSS selectors for extracting items.
+# Used by collect.py for sites without RSS/API.
+#
+# Format:
+#   source_id:
+#     url: <page URL>
+#     list_selector: <CSS selector for item list>
+#     title_from: <"a[title]" | "text" | CSS selector>
+#     date_selector: <CSS selector for date> (optional)
+#     max_items: <int> (default 10)
+#     timeout: <seconds> (default 15)
+#     verify_ssl: <bool> (default true)
+#     skip_styled: <bool> (default false)
+# ============================================================
+
+# Example:
+# sasac_media:
+#   url: http://www.sasac.gov.cn/n2588025/n2588139/index.html
+#   list_selector: ".zsy_conlist li"
+#   skip_styled: true
+#   title_from: "a[title]"
+#   date_selector: "span"
+#   max_items: 15

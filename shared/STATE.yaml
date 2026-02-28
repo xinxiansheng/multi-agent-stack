@@ -1,0 +1,47 @@
+# ============================================================
+# Shared State — Cross-Agent Collaboration Protocol
+# ============================================================
+# Rules:
+#   - Who generates, writes
+#   - Who can handle, claims (set status: claimed)
+#   - Complete → write notes
+#   - Don't delete, only change status
+# ============================================================
+
+# Intelligence signals from Observer
+signals: null
+# Example:
+# - date: '2026-02-24'
+#   source: observer
+#   target: nexus
+#   title: High-score signal detected
+#   type: signal
+#   status: new
+
+# Decision records from Arbiter
+decisions: null
+# Example:
+# - date: '2026-02-24'
+#   source: arbiter
+#   title: Investment strategy decision
+#   status: archived
+#   summary: Recommended approach A over B
+
+# Cross-agent task queue
+tasks: null
+# Example:
+# - date: '2026-02-24'
+#   source: nexus
+#   assigned_to: prism
+#   title: Generate monthly report
+#   status: pending
+#   due: '2026-02-28'
+
+# System alerts
+alerts: null
+# Example:
+# - date: '2026-02-24'
+#   source: vitals
+#   severity: info
+#   title: Sleep deficit detected
+#   detail: Only 2h sleep last night

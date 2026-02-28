@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>ai.openviking.dashboard</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>__HOME__/projects/openviking-local/.venv/bin/python3</string>
+        <string>__HOME__/projects/openviking-local/dashboard-server.py</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>LowPriorityBackgroundIO</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>__HOME__/.openclaw/logs/dashboard.log</string>
+    <key>StandardErrorPath</key>
+    <string>__HOME__/.openclaw/logs/dashboard.err.log</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>HOME</key>
+        <string>__HOME__</string>
+        <key>NO_PROXY</key>
+        <string>*</string>
+    </dict>
+</dict>
+</plist>

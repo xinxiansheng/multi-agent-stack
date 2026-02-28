@@ -1,0 +1,50 @@
+# ============================================================
+# Observer RSS Source Registry
+# ============================================================
+# Format per feed:
+#   - url: <RSS URL>
+#     name: <display name>
+#
+# Tips:
+#   - Use RSSHub (localhost:2035) for sites without native RSS
+#   - Use WeRSS (localhost:8001) for WeChat Official Accounts
+#   - Max 10 items fetched per source per run
+#
+# To add a new source, just add an entry under the right category.
+# ============================================================
+
+# --- AI & Technology ---
+ai_tech:
+  - url: https://importai.substack.com/feed
+    name: Import AI
+  - url: https://www.latent.space/feed
+    name: Latent Space
+  - url: https://alphasignal.ai/feed
+    name: AlphaSignal
+  - url: https://simonwillison.net/atom/everything/
+    name: Simon Willison
+  - url: https://huggingface.co/blog/feed.xml
+    name: Hugging Face Blog
+  # Add your RSSHub routes:
+  # - url: http://localhost:2035/36kr/information/ai
+  #   name: 36Kr AI
+
+# --- Business & Finance ---
+business:
+  # - url: http://localhost:2035/caixin/latest
+  #   name: 财新网-最新
+  # - url: http://localhost:2035/21caijing/channel/金融
+  #   name: 21经济-金融
+  []
+
+# --- Your Industry ---
+industry:
+  # Add industry-specific feeds here
+  []
+
+# --- Tech Community ---
+community:
+  - url: https://hnrss.org/best?count=15
+    name: Hacker News Best
+  # - url: http://localhost:2035/github/trending/daily
+  #   name: GitHub Trending

@@ -1,0 +1,21 @@
+# Tier-2 Scoring Rules
+
+## Positive Signals (Additive)
+- originality: +20 (first-hand information, original research)
+- new-insight: +15 (novel interpretation of known facts)
+- actionability: +15 (directly usable information)
+- data-driven: +10 (backed by specific data/metrics)
+- info-density: +10 (high information per word ratio)
+- insider: +10 (insider perspective, non-public info)
+- timeliness: +10 (breaking news, very recent event)
+- readability: +5 (well-structured, clear writing)
+- scarcity: +5 (rare topic, not widely covered)
+
+## Negative Signals (Deductions)
+- marketing: -30 (sponsored content, product promotion)
+- clickbait: -20 (misleading title, sensationalism)
+- one-sided: -15 (no counterargument, heavily biased)
+- AI-slop: -15 (obviously AI-generated filler)
+- repeat: -20 (same story rehashed from other sources)
+- no-evidence: -10 (claims without supporting data)
+- too-obscure: -10 (too niche, no practical relevance)

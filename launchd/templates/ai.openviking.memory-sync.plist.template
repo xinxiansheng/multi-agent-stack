@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>ai.openviking.memory-sync</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>__HOME__/projects/openviking-local/.venv/bin/python3</string>
+        <string>__HOME__/projects/openviking-local/memory-sync.py</string>
+    </array>
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>23</integer>
+        <key>Minute</key>
+        <integer>30</integer>
+    </dict>
+    <key>StandardOutPath</key>
+    <string>__HOME__/.openclaw/logs/memory-sync.log</string>
+    <key>StandardErrorPath</key>
+    <string>__HOME__/.openclaw/logs/memory-sync.err.log</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>HOME</key>
+        <string>__HOME__</string>
+        <key>NO_PROXY</key>
+        <string>*</string>
+    </dict>
+</dict>
+</plist>

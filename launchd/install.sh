@@ -49,6 +49,7 @@ for template in "$TEMPLATE_DIR"/*.template; do
         -e "s|__GATEWAY_PORT__|${GATEWAY_PORT:-18789}|g" \
         -e "s|__HTTP_PROXY__|${HTTP_PROXY:-}|g" \
         -e "s|__OPENVIKING_PORT__|${OPENVIKING_PORT:-2033}|g" \
+        -e "s|__RSSHUB_PORT__|${RSSHUB_PORT:-2035}|g" \
         "$template" > "$target"
 
     # Load the agent
