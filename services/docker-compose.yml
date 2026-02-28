@@ -1,0 +1,41 @@
+# ============================================================
+# RSSHub + Redis — Information collection infrastructure
+# ============================================================
+# Usage: docker compose up -d
+# ============================================================
+
+services:
+  rsshub:
+    image: diygod/rsshub:latest
+    restart: unless-stopped
+    ports:
+      - "${RSSHUB_PORT:-2035}:1200"
+    environment:
+      NODE_ENV: production
+      CACHE_TYPE: redis
+      REDIS_URL: "redis://redis:6379/"
+      PUPPETEER_WS_ENDPOINT: "ws://browserless:3000"
+    depends_on:
+      - redis
+      - browserless
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:1200/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+
+  browserless:
+    image: ghcr.io/browserless/chromium:latest
+    restart: unless-stopped
+    environment:
+      MAX_CONCURRENT_SESSIONS: 5
+      CONNECTION_TIMEOUT: 60000
+
+volumes:
+  redis-data:

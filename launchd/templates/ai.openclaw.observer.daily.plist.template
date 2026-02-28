@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>ai.openclaw.observer.daily</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>__HOMEBREW_PREFIX__/bin/openclaw</string>
+        <string>run</string>
+        <string>--agent</string>
+        <string>observer</string>
+        <string>--prompt</string>
+        <string>Generate today's daily intelligence report. Summarize all collected signals from today, highlight top findings, and push the report via Telegram.</string>
+    </array>
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>21</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+    <key>StandardOutPath</key>
+    <string>__HOME__/.openclaw/logs/observer-daily.log</string>
+    <key>StandardErrorPath</key>
+    <string>__HOME__/.openclaw/logs/observer-daily.err.log</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>HOME</key>
+        <string>__HOME__</string>
+        <key>PATH</key>
+        <string>__HOMEBREW_PREFIX__/bin:/usr/local/bin:/usr/bin:/bin</string>
+        <key>HTTPS_PROXY</key>
+        <string>__HTTP_PROXY__</string>
+    </dict>
+</dict>
+</plist>

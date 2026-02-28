@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>ai.openclaw.healthcheck</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>__HOMEBREW_PREFIX__/bin/python3</string>
+        <string>__HOME__/.openclaw/scripts/healthcheck.py</string>
+    </array>
+    <key>StartInterval</key>
+    <integer>1800</integer>
+    <key>StandardOutPath</key>
+    <string>__HOME__/.openclaw/logs/healthcheck.log</string>
+    <key>StandardErrorPath</key>
+    <string>__HOME__/.openclaw/logs/healthcheck.err.log</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>HOME</key>
+        <string>__HOME__</string>
+        <key>PATH</key>
+        <string>__HOMEBREW_PREFIX__/bin:/usr/local/bin:/usr/bin:/bin</string>
+        <key>HTTPS_PROXY</key>
+        <string>__HTTP_PROXY__</string>
+    </dict>
+</dict>
+</plist>

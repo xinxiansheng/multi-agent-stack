@@ -1,0 +1,10 @@
+# Environment (contains API keys)
+.env
+
+# macOS
+.DS_Store
+
+# Editor
+*.swp
+*.swo
+*~
