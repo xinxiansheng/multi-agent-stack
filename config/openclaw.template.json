@@ -147,7 +147,25 @@
           "emoji": "\u26a1"
         },
         "subagents": {
-          "allowAgents": ["observer"]
+          "allowAgents": ["observer", "arbiter"]
+        }
+      },
+      {
+        "id": "arbiter",
+        "name": "Arbiter",
+        "workspace": "${HOME_DIR}/.openclaw/workspace-arbiter",
+        "agentDir": "${HOME_DIR}/.openclaw/agents/arbiter/agent",
+        "model": {
+          "primary": "anthropic/claude-opus-4-6",
+          "fallbacks": []
+        },
+        "identity": {
+          "name": "Arbiter",
+          "theme": "strategic advisor",
+          "emoji": "\u2696\ufe0f"
+        },
+        "subagents": {
+          "allowAgents": ["main"]
         }
       },
       {

@@ -106,8 +106,9 @@ fi
 step "Step 4/12: Directory Structure"
 
 OPENCLAW_HOME="$HOME/.openclaw"
-mkdir -p "$OPENCLAW_HOME"/{logs,scripts,shared,agents/main/agent,agents/observer/agent}
+mkdir -p "$OPENCLAW_HOME"/{logs,scripts,shared,agents/main/agent,agents/observer/agent,agents/arbiter/agent}
 mkdir -p "$OPENCLAW_HOME"/{workspace/memory,workspace-observer/memory,workspace-observer/archive/daily}
+mkdir -p "$OPENCLAW_HOME"/{workspace-arbiter/memory,workspace-arbiter/decisions}
 mkdir -p "$OPENCLAW_HOME"/{workspace-observer/scripts,workspace-observer/config}
 mkdir -p "$OPENCLAW_HOME"/{openviking-data/viking,backups}
 mkdir -p "$HOME"/{projects/openviking-local,.openviking}
@@ -143,8 +144,20 @@ for f in SOUL.md IDENTITY.md TOOLS.md AGENTS.md; do
     fi
 done
 
+# Arbiter
+for f in SOUL.md IDENTITY.md TOOLS.md AGENTS.md; do
+    src="$SCRIPT_DIR/agents/arbiter/$f"
+    dst="$OPENCLAW_HOME/workspace-arbiter/$f"
+    if [[ -f "$dst" ]]; then
+        warn "Skipping $dst (already exists)"
+    elif [[ -f "$src" ]]; then
+        cp "$src" "$dst"
+        log "Arbiter: $f deployed"
+    fi
+done
+
 # Initialize git in workspaces for version control
-for ws in workspace workspace-observer; do
+for ws in workspace workspace-observer workspace-arbiter; do
     if [[ ! -d "$OPENCLAW_HOME/$ws/.git" ]]; then
         (cd "$OPENCLAW_HOME/$ws" && git init -q && git add -A && git commit -q -m "Initial workspace setup")
         log "$ws: git initialized"
@@ -266,7 +279,7 @@ else
 fi
 
 # Check workspaces
-for ws in workspace workspace-observer; do
+for ws in workspace workspace-arbiter workspace-observer; do
     if [[ -f "$OPENCLAW_HOME/$ws/SOUL.md" ]]; then
         log "$ws: SOUL.md present"
     else
@@ -299,6 +312,7 @@ echo "Your multi-agent system is deployed:"
 echo ""
 echo "  Agents:"
 echo "    ⚡ Nexus    — Central dispatcher (default)"
+echo "    ⚖️ Arbiter  — Strategic advisor + decision analysis"
 echo "    👁️ Observer  — Intelligence analyst + collection pipeline"
 echo ""
 echo "  Infrastructure:"
