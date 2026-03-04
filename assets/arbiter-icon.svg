@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#E17055"/>
+      <stop offset="100%" style="stop-color:#C0392B"/>
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <!-- Scale beam -->
+  <line x1="136" y1="248" x2="376" y2="248" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round"/>
+  <!-- Center pillar -->
+  <line x1="256" y1="248" x2="256" y2="380" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round"/>
+  <!-- Base -->
+  <line x1="200" y1="380" x2="312" y2="380" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round"/>
+  <!-- Top triangle / fulcrum -->
+  <polygon points="256,168 236,248 276,248" fill="#FFFFFF"/>
+  <!-- Left pan -->
+  <path d="M112 260 Q112 312 160 312 L136 312 Q88 312 88 260" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="0"/>
+  <ellipse cx="136" cy="248" rx="52" ry="8" fill="rgba(255,255,255,0.4)"/>
+  <path d="M84 248 C84 248 92 316 136 316 C180 316 188 248 188 248" fill="none" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round"/>
+  <!-- Right pan -->
+  <ellipse cx="376" cy="248" rx="52" ry="8" fill="rgba(255,255,255,0.4)"/>
+  <path d="M324 248 C324 248 332 316 376 316 C420 316 428 248 428 248" fill="none" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round"/>
+  <!-- Left chain -->
+  <line x1="136" y1="248" x2="84" y2="248" stroke="rgba(255,255,255,0.5)" stroke-width="4"/>
+  <line x1="136" y1="248" x2="188" y2="248" stroke="rgba(255,255,255,0.5)" stroke-width="4"/>
+  <!-- Right chain -->
+  <line x1="376" y1="248" x2="324" y2="248" stroke="rgba(255,255,255,0.5)" stroke-width="4"/>
+  <line x1="376" y1="248" x2="428" y2="248" stroke="rgba(255,255,255,0.5)" stroke-width="4"/>
+  <!-- Diamond accent at top -->
+  <polygon points="256,132 268,152 256,172 244,152" fill="rgba(255,255,255,0.6)"/>
+</svg>

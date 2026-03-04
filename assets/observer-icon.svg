@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00B894"/>
+      <stop offset="100%" style="stop-color:#00916E"/>
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <!-- Radar rings -->
+  <circle cx="256" cy="268" r="160" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="4"/>
+  <circle cx="256" cy="268" r="115" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="4"/>
+  <circle cx="256" cy="268" r="70" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="4"/>
+  <!-- Eye shape -->
+  <path d="M96 256 Q176 160 256 160 Q336 160 416 256 Q336 352 256 352 Q176 352 96 256 Z" fill="rgba(255,255,255,0.9)"/>
+  <!-- Iris -->
+  <circle cx="256" cy="256" r="56" fill="#00916E"/>
+  <!-- Pupil -->
+  <circle cx="256" cy="256" r="28" fill="#1A1A2E"/>
+  <!-- Light reflection -->
+  <circle cx="242" cy="244" r="10" fill="rgba(255,255,255,0.7)"/>
+  <!-- Scan line -->
+  <line x1="256" y1="268" x2="356" y2="168" stroke="rgba(255,255,255,0.4)" stroke-width="3" stroke-linecap="round"/>
+  <!-- Scan dot -->
+  <circle cx="356" cy="168" r="6" fill="#FFFFFF"/>
+</svg>
