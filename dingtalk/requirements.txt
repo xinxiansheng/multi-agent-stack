@@ -1,2 +1,2 @@
-dingtalk-stream>=1.4.0
+dingtalk-stream>=0.24.0
 httpx>=0.27

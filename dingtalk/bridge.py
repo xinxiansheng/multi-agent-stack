@@ -5,13 +5,13 @@ DingTalk <-> OpenClaw Bridge
 Bidirectional bridge between DingTalk (Stream API) and OpenClaw Gateway.
 
 Flow:
-  DingTalk User --[Stream API]--> bridge.py --[HTTP API]--> OpenClaw Gateway
-  DingTalk User <--[Robot API]-- bridge.py <--[Response]-- OpenClaw Gateway
+  DingTalk User --[Stream API]--> bridge.py --[openclaw agent]--> Gateway --> Agent
+  DingTalk User <--[Robot API]-- bridge.py <--[stdout]---------- Agent
 
 Prerequisites:
-  - DingTalk enterprise app with Robot capability
+  - DingTalk app with Robot capability (Stream mode)
   - dingtalk-stream SDK
-  - OpenClaw Gateway running on localhost
+  - OpenClaw Gateway running, `openclaw` CLI in PATH
 
 Usage:
   python bridge.py
@@ -21,21 +21,23 @@ Usage:
 import json
 import logging
 import os
+import subprocess
 import sys
-import time
-import threading
 
-try:
-    import httpx
-    HAS_HTTPX = True
-except ImportError:
-    import urllib.request
-    HAS_HTTPX = False
+# DingTalk is a domestic service — must bypass system proxy
+# macOS system proxy leaks into urllib.request.getproxies() and breaks websockets
+for k in list(os.environ):
+    if k.lower() in ("http_proxy", "https_proxy", "all_proxy", "socks_proxy"):
+        del os.environ[k]
+os.environ["no_proxy"] = "*"
+
+import urllib.request
+urllib.request.getproxies = lambda: {}
 
 try:
     from dingtalk_stream import (
         AckMessage, CallbackHandler, ChatbotHandler,
-        ChatbotMessage, DingTalkStreamClient,
+        ChatbotMessage, Credential, DingTalkStreamClient,
     )
 except ImportError:
     print("ERROR: dingtalk-stream not installed.")
@@ -54,93 +56,60 @@ logger = logging.getLogger("dingtalk-bridge")
 APP_KEY = os.environ.get("DINGTALK_APP_KEY", "")
 APP_SECRET = os.environ.get("DINGTALK_APP_SECRET", "")
 
-GATEWAY_URL = os.environ.get(
-    "GATEWAY_URL", "http://127.0.0.1:18789")
-GATEWAY_AUTH_TOKEN = os.environ.get("GATEWAY_AUTH_TOKEN", "")
-
 # Which OpenClaw agent handles DingTalk messages
 AGENT_ID = os.environ.get("DINGTALK_AGENT_ID", "main")
 
-# Timeout for waiting for Gateway response
+# Timeout for agent response (seconds)
 RESPONSE_TIMEOUT = int(os.environ.get("DINGTALK_RESPONSE_TIMEOUT", "120"))
+
+# Path to openclaw CLI
+OPENCLAW_BIN = os.environ.get("OPENCLAW_BIN", "openclaw")
 
 
 # -- Gateway Communication --------------------------------------------------
 
-def send_to_gateway(sender_id: str, text: str,
-                    conversation_id: str = "") -> str:
-    """Send message to OpenClaw Gateway and get response."""
-    url = f"{GATEWAY_URL}/api/v1/message"
-    payload = {
-        "agentId": AGENT_ID,
-        "channel": "dingtalk",
-        "senderId": sender_id,
-        "conversationId": conversation_id or sender_id,
-        "text": text,
-        "metadata": {
-            "source": "dingtalk-bridge",
-        },
-    }
-    headers = {
-        "Content-Type": "application/json",
-    }
-    if GATEWAY_AUTH_TOKEN:
-        headers["Authorization"] = f"Bearer {GATEWAY_AUTH_TOKEN}"
+def send_to_agent(text: str, session_id: str = "") -> str:
+    """Send message to OpenClaw agent via CLI and get response."""
+    cmd = [
+        OPENCLAW_BIN, "agent",
+        "--agent", AGENT_ID,
+        "--message", text,
+        "--json",
+    ]
+    if session_id:
+        cmd.extend(["--session-id", session_id])
 
     try:
-        if HAS_HTTPX:
-            with httpx.Client(timeout=RESPONSE_TIMEOUT) as client:
-                resp = client.post(url, json=payload, headers=headers)
-                resp.raise_for_status()
-                data = resp.json()
-        else:
-            req_data = json.dumps(payload).encode()
-            req = urllib.request.Request(
-                url, data=req_data, headers=headers)
-            resp = urllib.request.urlopen(req, timeout=RESPONSE_TIMEOUT)
-            data = json.loads(resp.read())
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=RESPONSE_TIMEOUT,
+        )
 
-        # Extract response text
-        if isinstance(data, dict):
-            return (data.get("text", "")
-                    or data.get("reply", "")
-                    or data.get("message", "")
-                    or json.dumps(data, ensure_ascii=False))
-        return str(data)
+        if result.returncode != 0:
+            logger.error(f"openclaw agent failed: {result.stderr[:200]}")
+            return f"[Bridge Error] Agent returned error: {result.stderr[:200]}"
 
+        data = json.loads(result.stdout)
+
+        # Extract reply text from JSON response
+        payloads = data.get("result", {}).get("payloads", [])
+        if payloads:
+            texts = [p.get("text", "") for p in payloads if p.get("text")]
+            return "\n".join(texts) if texts else "[No response]"
+
+        return data.get("text", "[No response]")
+
+    except subprocess.TimeoutExpired:
+        logger.error("Agent response timeout")
+        return "[Bridge Error] Agent response timeout"
+    except json.JSONDecodeError as e:
+        logger.error(f"Failed to parse agent response: {e}")
+        return result.stdout if result.stdout else "[Bridge Error] Invalid response"
     except Exception as e:
-        logger.error(f"Gateway error: {e}")
-        return f"[Bridge Error] Failed to reach agent: {e}"
-
-
-def poll_gateway_response(request_id: str) -> str:
-    """Poll Gateway for async response (if Gateway uses async mode)."""
-    url = f"{GATEWAY_URL}/api/v1/message/{request_id}"
-    headers = {}
-    if GATEWAY_AUTH_TOKEN:
-        headers["Authorization"] = f"Bearer {GATEWAY_AUTH_TOKEN}"
-
-    deadline = time.time() + RESPONSE_TIMEOUT
-    while time.time() < deadline:
-        try:
-            if HAS_HTTPX:
-                with httpx.Client(timeout=30) as client:
-                    resp = client.get(url, headers=headers)
-                    if resp.status_code == 200:
-                        data = resp.json()
-                        if data.get("status") == "completed":
-                            return data.get("text", "")
-            else:
-                req = urllib.request.Request(url, headers=headers)
-                resp = urllib.request.urlopen(req, timeout=30)
-                data = json.loads(resp.read())
-                if data.get("status") == "completed":
-                    return data.get("text", "")
-        except Exception:
-            pass
-        time.sleep(2)
-
-    return "[Bridge Error] Response timeout"
+        logger.error(f"Agent error: {e}")
+        return f"[Bridge Error] {e}"
 
 
 # -- DingTalk Handler --------------------------------------------------------
@@ -157,16 +126,16 @@ class OpenClawChatbotHandler(ChatbotHandler):
         conversation_id = incoming.conversation_id or sender_id
 
         if not text:
-            self.reply_text("Please send a text message.", incoming)
+            self.reply_text("请发送文字消息。", incoming)
             return AckMessage.STATUS_OK, "OK"
 
         logger.info(f"[{sender_nick}] {text[:80]}")
 
-        # Forward to OpenClaw Gateway
-        reply = send_to_gateway(
-            sender_id=sender_id,
+        # Forward to OpenClaw agent
+        # Use conversation_id as session_id for context continuity
+        reply = send_to_agent(
             text=text,
-            conversation_id=conversation_id,
+            session_id=f"dingtalk:{conversation_id}",
         )
 
         # Truncate if too long for DingTalk (max ~20000 chars for markdown)
@@ -177,7 +146,7 @@ class OpenClawChatbotHandler(ChatbotHandler):
 
         # Reply via DingTalk
         self.reply_markdown(
-            title=f"Reply",
+            title="Reply",
             text=reply,
             incoming_message=incoming,
         )
@@ -193,12 +162,23 @@ def main():
         print("  Set them in .env or as environment variables.")
         sys.exit(1)
 
+    # Verify openclaw CLI is available
+    try:
+        ver = subprocess.run(
+            [OPENCLAW_BIN, "--version"],
+            capture_output=True, text=True, timeout=5,
+        )
+        logger.info(f"OpenClaw: {ver.stdout.strip()}")
+    except FileNotFoundError:
+        print(f"ERROR: '{OPENCLAW_BIN}' not found in PATH.")
+        print("  Set OPENCLAW_BIN env var or ensure openclaw is installed.")
+        sys.exit(1)
+
     logger.info("DingTalk <-> OpenClaw Bridge starting")
-    logger.info(f"  Gateway: {GATEWAY_URL}")
     logger.info(f"  Agent: {AGENT_ID}")
 
     client = DingTalkStreamClient(
-        credential=DingTalkStreamClient.Credential(
+        credential=Credential(
             client_id=APP_KEY,
             client_secret=APP_SECRET,
         ),
