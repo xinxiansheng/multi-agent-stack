@@ -1,26 +1,44 @@
 # ============================================================
 # Web Scraper Source Configs (requires beautifulsoup4)
 # ============================================================
-# Each source defines CSS selectors for extracting items.
-# Used by collect.py for sites without RSS/API.
+# For sites without RSS feeds. Used by collect.py.
 #
 # Format:
-#   source_id:
-#     url: <page URL>
-#     list_selector: <CSS selector for item list>
-#     title_from: <"a[title]" | "text" | CSS selector>
-#     date_selector: <CSS selector for date> (optional)
-#     max_items: <int> (default 10)
-#     timeout: <seconds> (default 15)
-#     verify_ssl: <bool> (default true)
-#     skip_styled: <bool> (default false)
+#   sites:
+#     source_id:
+#       name: <display name>
+#       url: <page URL>
+#       list_selector: <CSS selector for item list>
+#       title_from: <"text" | "attr:title" | "a[title]">
+#       link_selector: <CSS selector> (default: "a")
+#       link_attr: <attribute> (default: "href")
+#       date_selector: <CSS selector for date> (optional)
+#       date_strip: <chars to remove from date> (optional)
+#       base_url: <base URL for relative links> (default: url)
+#       max_items: <int> (default: 15)
+#       timeout: <seconds> (default: 15)
+#       verify_ssl: <bool> (default: true)
+#       skip_styled: <bool> (default: false)
+#       title_strip_suffix: <suffix to remove from title> (optional)
 # ============================================================
 
-# Example:
-# sasac_media:
-#   url: http://www.sasac.gov.cn/n2588025/n2588139/index.html
-#   list_selector: ".zsy_conlist li"
-#   skip_styled: true
-#   title_from: "a[title]"
-#   date_selector: "span"
-#   max_items: 15
+sites:
+  # --- Example: Government News ---
+  # sasac_media:
+  #   name: SASAC Media
+  #   url: http://www.sasac.gov.cn/n2588025/n2588139/index.html
+  #   list_selector: ".zsy_conlist li"
+  #   skip_styled: true
+  #   title_from: "a[title]"
+  #   date_selector: "span"
+  #   max_items: 15
+
+  # --- Example: Tech Blog ---
+  # example_tech:
+  #   name: Example Tech Blog
+  #   url: https://example.com/blog
+  #   list_selector: "article.post"
+  #   title_from: text
+  #   link_selector: "a.post-title"
+  #   date_selector: "time"
+  #   max_items: 10

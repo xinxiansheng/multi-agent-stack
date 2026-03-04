@@ -6,9 +6,8 @@
     <string>ai.openviking.mcp</string>
     <key>ProgramArguments</key>
     <array>
-        <string>__HOMEBREW_PREFIX__/bin/python3</string>
-        <string>-m</string>
-        <string>agfs.server</string>
+        <string>__HOME__/projects/openviking-local/.venv/bin/python3</string>
+        <string>__HOME__/projects/openviking-local/server.py</string>
         <string>--port</string>
         <string>__OPENVIKING_PORT__</string>
     </array>

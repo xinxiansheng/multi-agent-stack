@@ -1,5 +1,9 @@
 # Observer Focus Areas (Tier-1 Filter)
 
+> Tier-1 uses these topics to decide which items are relevant.
+> Format: Group by priority (HIGH > MEDIUM > LOW).
+> Each topic should be a specific area, not too broad.
+
 ## Active Topics
 
 ### AI & Technology (HIGH)
@@ -7,6 +11,7 @@
 - AI application in real business scenarios
 - LLM breakthroughs and new model releases
 - Developer tools and productivity
+- RAG, semantic search, knowledge management
 
 ### Business & Industry (MEDIUM)
 - [Your industry topic 1]

@@ -47,7 +47,11 @@ if [[ ! -d "$OV_PROJECT/.venv" ]]; then
 fi
 
 source "$OV_PROJECT/.venv/bin/activate"
-pip install -q openviking fastmcp uvicorn pyyaml
+if [[ -f "$SCRIPT_DIR/requirements.txt" ]]; then
+    pip install -q -r "$SCRIPT_DIR/requirements.txt"
+else
+    pip install -q openviking fastmcp uvicorn pyyaml httpx mcp
+fi
 log "Dependencies installed"
 deactivate
 
@@ -90,7 +94,7 @@ log "OpenViking config generated at $OV_CONF/ov.conf"
 # ── Step 4: Deploy scripts ────────────────────────────────────
 step "Step 4: Deploy Scripts"
 
-for script in server.py memory-sync.py ingest.py ov-search.sh start-mcp.sh; do
+for script in server.py memory-sync.py ingest.py ov-search.sh start-mcp.sh dashboard-server.py build-dashboard.py; do
     src="$SCRIPT_DIR/$script"
     dst="$OV_PROJECT/$script"
     if [[ -f "$src" ]]; then

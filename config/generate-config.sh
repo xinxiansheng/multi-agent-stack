@@ -40,7 +40,13 @@ echo "  Home: $HOME_DIR"
 echo "  Gateway port: $GATEWAY_PORT"
 echo "  Primary model: $PRIMARY_MODEL"
 
-# Use envsubst for variable replacement
+# Check envsubst is available
+if ! command -v envsubst &>/dev/null; then
+    echo "ERROR: envsubst not found. Install gettext:"
+    echo "  brew install gettext"
+    exit 1
+fi
+
 # Required vars check
 for var in GATEWAY_PORT GATEWAY_AUTH_TOKEN PRIMARY_MODEL; do
     if [[ -z "${!var:-}" ]]; then
@@ -57,9 +63,16 @@ export MACHINE_USER HOME_DIR GATEWAY_PORT GATEWAY_AUTH_TOKEN \
        TG_NEXUS_BOT_TOKEN TG_OBSERVER_BOT_TOKEN TG_OWNER_USER_ID \
        MINIMAX_API_KEY NEWAPI_BASE_URL NEWAPI_API_KEY \
        OPENVIKING_PORT RSSHUB_PORT \
-       WHISPER_MODEL WHISPER_LANGUAGE
+       WHISPER_MODEL WHISPER_LANGUAGE \
+       DINGTALK_ENABLED DINGTALK_APP_KEY DINGTALK_APP_SECRET DINGTALK_AGENT_ID
 
 envsubst < "$TEMPLATE" > "$OUTPUT"
+
+# Verify no unsubstituted placeholders remain
+if grep -q '${[A-Z_]*}' "$OUTPUT" 2>/dev/null; then
+    echo "WARN: Some variables may not have been substituted:"
+    grep -o '\${[A-Z_]*}' "$OUTPUT" | sort -u | head -10
+fi
 
 # Validate JSON
 if python3 -c "import json; json.load(open('$OUTPUT'))" 2>/dev/null; then

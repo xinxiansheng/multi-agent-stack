@@ -2,176 +2,207 @@
 """
 Observer Daily Briefing Generator
 ==================================
+Collects all knowledge cards from the day, generates a structured briefing
+via LLM, and pushes to IM via OpenClaw CLI.
+
 Usage:
   python daily.py                    # Today's briefing
   python daily.py --no-push          # Generate but don't push
   python daily.py --date 2026-02-15  # Specific date
-
-Collects all cards from the day, generates a structured briefing via LLM,
-and pushes to Telegram via OpenClaw.
 """
 
-import argparse
 import json
 import os
+import re
+import subprocess
 import sys
-import urllib.request
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
+
+import yaml
+
+try:
+    import httpx
+    HAS_HTTPX = True
+except ImportError:
+    import urllib.request
+    HAS_HTTPX = False
 
 WORKSPACE = Path(os.environ.get(
     "OBSERVER_WORKSPACE",
     os.path.expanduser("~/.openclaw/workspace-observer")
 ))
 ARCHIVE_DIR = WORKSPACE / "archive"
-DAILY_DIR = ARCHIVE_DIR / "daily"
 
 LLM_BASE_URL = os.environ.get("LLM_BASE_URL", "https://newapi.sms88.info/v1")
 LLM_API_KEY = os.environ.get("LLM_API_KEY", "")
 LLM_DAILY_MODEL = os.environ.get("LLM_DAILY_MODEL", "gemini-3-pro-preview")
 
-TG_BOT_TOKEN = os.environ.get("TG_BOT_TOKEN", "")
-TG_CHAT_ID = os.environ.get("TG_CHAT_ID", "")
-TG_PROXY = os.environ.get("TG_PROXY", "")
-PROXY = os.environ.get("HTTPS_PROXY", os.environ.get("HTTP_PROXY", ""))
+CST = timezone(timedelta(hours=8))
 
 
-def llm_call(model: str, system: str, user: str) -> str:
+def _llm_call(system: str, user: str) -> str:
     if not LLM_API_KEY:
         return ""
-    url = f"{LLM_BASE_URL}/chat/completions"
-    payload = json.dumps({
-        "model": model,
+
+    payload = {
+        "model": LLM_DAILY_MODEL,
         "messages": [
             {"role": "system", "content": system},
-            {"role": "user", "content": user}
+            {"role": "user", "content": user},
         ],
         "temperature": 0.3,
-        "max_tokens": 8192
-    }).encode()
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {LLM_API_KEY}"
+        "max_tokens": 4096,
     }
-    if PROXY:
-        handler = urllib.request.ProxyHandler({"http": PROXY, "https": PROXY})
-        opener = urllib.request.build_opener(handler)
-    else:
-        opener = urllib.request.build_opener()
-    req = urllib.request.Request(url, data=payload, headers=headers)
-    try:
-        resp = opener.open(req, timeout=120)
-        data = json.loads(resp.read())
-        return data["choices"][0]["message"]["content"].strip()
-    except Exception as e:
-        print(f"  LLM error: {e}")
-        return ""
+    headers = {
+        "Authorization": f"Bearer {LLM_API_KEY}",
+        "Content-Type": "application/json",
+    }
 
-
-def tg_push(text: str):
-    if not TG_BOT_TOKEN or not TG_CHAT_ID:
-        return False
-    url = f"https://api.telegram.org/bot{TG_BOT_TOKEN}/sendMessage"
-    payload = json.dumps({
-        "chat_id": TG_CHAT_ID,
-        "text": text,
-        "parse_mode": "Markdown"
-    }).encode()
-    if TG_PROXY:
-        handler = urllib.request.ProxyHandler({"http": TG_PROXY, "https": TG_PROXY})
-        opener = urllib.request.build_opener(handler)
+    if HAS_HTTPX:
+        with httpx.Client(timeout=120) as client:
+            resp = client.post(f"{LLM_BASE_URL}/chat/completions",
+                               json=payload, headers=headers)
+            resp.raise_for_status()
+            return resp.json()["choices"][0]["message"]["content"]
     else:
-        opener = urllib.request.build_opener()
-    req = urllib.request.Request(url, data=payload, headers={"Content-Type": "application/json"})
-    try:
-        opener.open(req, timeout=15)
-        return True
-    except Exception as e:
-        print(f"  TG push error: {e}")
-        return False
+        data = json.dumps(payload).encode()
+        req = urllib.request.Request(
+            f"{LLM_BASE_URL}/chat/completions", data=data, headers=headers)
+        resp = urllib.request.urlopen(req, timeout=120)
+        return json.loads(
+            resp.read())["choices"][0]["message"]["content"]
 
 
 def collect_cards(date_str: str) -> list:
     """Collect all knowledge cards for a given date."""
-    # Cards are stored in archive/YYYY-MM/
     month = date_str[:7]
     month_dir = ARCHIVE_DIR / month
     if not month_dir.exists():
         return []
 
     cards = []
-    for f in sorted(month_dir.glob("*.md")):
+    for f in month_dir.glob("*.md"):
         content = f.read_text(encoding="utf-8")
-        # Parse YAML frontmatter
-        if content.startswith("---"):
-            parts = content.split("---", 2)
-            if len(parts) >= 3:
-                # Check if card date matches
-                if date_str in parts[1]:
-                    cards.append({"file": f.name, "content": content})
+        m = re.match(r'^---\n(.*?)\n---', content, re.DOTALL)
+        if not m:
+            continue
+        try:
+            meta = yaml.safe_load(m.group(1))
+            if not isinstance(meta, dict):
+                continue
+            if meta.get("date") == date_str:
+                meta["_body"] = content[m.end():].strip()
+                cards.append(meta)
+        except Exception:
+            continue
+
+    cards.sort(key=lambda c: c.get("score", 0), reverse=True)
     return cards
 
 
 def generate_briefing(cards: list, date_str: str) -> str:
-    """Generate daily briefing via LLM."""
     if not cards:
-        return f"📋 *Observer Daily — {date_str}*\n\n今日无新采集。"
+        return f"# {date_str} Observer Daily\n\nNo new intelligence today.\n"
+
+    high = [c for c in cards if c.get("score", 0) >= 70]
+    low = [c for c in cards if 50 <= c.get("score", 0) < 70]
+
+    card_summaries = []
+    for c in high:
+        highlights = "\n".join(
+            f"  - {h}" for h in c.get("highlights", []))
+        card_summaries.append(
+            f"### [{c.get('score', '?')}] {c.get('title', 'Untitled')}\n"
+            f"Source: {c.get('source', '?')} | "
+            f"Tags: {', '.join(c.get('topics', []))}\n"
+            f"Highlights:\n{highlights}\n"
+            + (f"Quote: {c.get('golden_quote', '')}\n"
+               if c.get('golden_quote') else "")
+            + f"Link: {c.get('url', '')}"
+        )
+
+    cards_text = "\n\n".join(card_summaries)
 
     system = (
-        "你是信息分析师，生成一份简洁的每日情报简报。\n"
-        "格式:\n"
-        "📋 Observer Daily — {date}\n\n"
-        "📊 今日统计: X 条采集\n\n"
-        "🔥 重点关注 (≥70分):\n"
-        "逐条列出标题、分数、一句话要点\n\n"
-        "📦 其他归档 (50-69分):\n"
-        "仅列标题\n\n"
-        "💡 今日洞察:\n"
-        "跨领域趋势观察 (1-2句)\n\n"
-        "保持简洁，每条不超过2行。"
+        "你是 Observer，生成每日情报简报。风格要求：\n"
+        "- 结论先行，不要铺垫\n"
+        "- 按重要性分层：🔴 重要 / 🟡 关注 / 🔵 了解\n"
+        "- 每条信息 2-3 行，包含核心观点和为什么重要\n"
+        "- 最后加一段「今日洞察」：跨领域关联发现（如有）\n"
+        "- 用 Markdown 格式\n"
+        "- 不要超过 1500 字\n"
     )
 
-    user = f"日期: {date_str}\n采集 {len(cards)} 条:\n\n"
-    for card in cards[:30]:  # Limit to avoid context overflow
-        user += f"---\n{card['content'][:500]}\n"
+    user_msg = (
+        f"## Date: {date_str}\n"
+        f"## High-score ({len(high)} items)\n\n{cards_text}\n\n"
+        f"## Archived ({len(low)} items)\n"
+        + "\n".join(
+            f"- [{c.get('score', '?')}] {c.get('title', '')} "
+            f"({c.get('source', '')})"
+            for c in low)
+        + "\n\nPlease generate the daily briefing:"
+    )
 
-    return llm_call(LLM_DAILY_MODEL, system, user)
+    try:
+        return _llm_call(system, user_msg)
+    except Exception as e:
+        briefing = f"# {date_str} Observer Daily\n\n"
+        briefing += f"(Model generation failed: {e})\n\n"
+        briefing += cards_text
+        return briefing
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Observer Daily Briefing")
-    parser.add_argument("--date", default=datetime.now().strftime("%Y-%m-%d"),
-                        help="Date for briefing (YYYY-MM-DD)")
-    parser.add_argument("--no-push", action="store_true",
-                        help="Don't push to Telegram")
-    args = parser.parse_args()
+def push_briefing(briefing: str, date_str: str):
+    """Push briefing via OpenClaw CLI."""
+    if len(briefing) > 3800:
+        briefing = briefing[:3800] + "\n\n...(see archive for full version)"
 
-    date_str = args.date
+    msg = f"Observer Daily {date_str}\n\n{briefing}"
+
+    try:
+        subprocess.run(
+            ["openclaw", "agent", "--agent", "main",
+             "--channel", "telegram", "--deliver", "-m", msg],
+            capture_output=True, text=True, timeout=60,
+        )
+        print("  Pushed to IM")
+    except FileNotFoundError:
+        print("  WARN: openclaw CLI not found, skipping push")
+    except Exception as e:
+        print(f"  WARN push failed: {e}")
+
+
+def run(date_str: str = None, push: bool = True):
+    if not date_str:
+        date_str = datetime.now(CST).strftime("%Y-%m-%d")
+
     print(f"Observer Daily Briefing — {date_str}")
 
-    # Collect cards
     cards = collect_cards(date_str)
-    print(f"  Found {len(cards)} cards")
+    print(f"  Knowledge cards: {len(cards)}")
 
-    # Generate briefing
     briefing = generate_briefing(cards, date_str)
-    print(f"  Briefing generated ({len(briefing)} chars)")
 
-    # Save to daily/
-    DAILY_DIR.mkdir(parents=True, exist_ok=True)
-    daily_file = DAILY_DIR / f"{date_str}.md"
+    daily_dir = ARCHIVE_DIR / "daily"
+    daily_dir.mkdir(parents=True, exist_ok=True)
+    daily_file = daily_dir / f"{date_str}.md"
     daily_file.write_text(briefing, encoding="utf-8")
     print(f"  Saved: {daily_file}")
 
-    # Push
-    if not args.no_push:
-        if tg_push(briefing):
-            print("  Pushed to Telegram")
-        else:
-            print("  TG push skipped/failed")
+    if push and cards:
+        push_briefing(briefing, date_str)
 
     print("Done.")
 
 
 if __name__ == "__main__":
-    main()
+    args = sys.argv[1:]
+    no_push = "--no-push" in args
+    date_val = None
+    for i, a in enumerate(args):
+        if a == "--date" and i + 1 < len(args):
+            date_val = args[i + 1]
+
+    run(date_str=date_val, push=not no_push)

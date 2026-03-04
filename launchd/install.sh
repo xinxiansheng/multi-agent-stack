@@ -42,14 +42,23 @@ for template in "$TEMPLATE_DIR"/*.template; do
 
     echo "  Installing: $filename"
 
+    # Skip DingTalk plist if not enabled
+    if [[ "$filename" == *"dingtalk"* && "${DINGTALK_ENABLED:-false}" != "true" ]]; then
+        echo "    Skipped (DINGTALK_ENABLED != true)"
+        continue
+    fi
+
     # Replace placeholders
     sed \
         -e "s|__HOME__|$HOME_DIR|g" \
         -e "s|__HOMEBREW_PREFIX__|$HOMEBREW_PREFIX|g" \
         -e "s|__GATEWAY_PORT__|${GATEWAY_PORT:-18789}|g" \
+        -e "s|__GATEWAY_AUTH_TOKEN__|${GATEWAY_AUTH_TOKEN:-}|g" \
         -e "s|__HTTP_PROXY__|${HTTP_PROXY:-}|g" \
         -e "s|__OPENVIKING_PORT__|${OPENVIKING_PORT:-2033}|g" \
         -e "s|__RSSHUB_PORT__|${RSSHUB_PORT:-2035}|g" \
+        -e "s|__DINGTALK_APP_KEY__|${DINGTALK_APP_KEY:-}|g" \
+        -e "s|__DINGTALK_APP_SECRET__|${DINGTALK_APP_SECRET:-}|g" \
         "$template" > "$target"
 
     # Load the agent

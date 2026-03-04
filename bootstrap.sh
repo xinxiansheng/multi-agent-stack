@@ -49,7 +49,7 @@ log ".env loaded"
 # ============================================================
 # Step 1: Install Homebrew (if missing)
 # ============================================================
-step "Step 1/8: Homebrew"
+step "Step 1/12: Homebrew"
 
 if command -v brew &>/dev/null; then
     log "Homebrew already installed: $(brew --prefix)"
@@ -64,10 +64,10 @@ HOMEBREW_PREFIX="$(brew --prefix)"
 # ============================================================
 # Step 2: Install core dependencies
 # ============================================================
-step "Step 2/11: Core Dependencies"
+step "Step 2/12: Core Dependencies"
 
-deps=(node python3 git)
-brew_deps=(node python@3.13 git)
+deps=(node python3 git envsubst)
+brew_deps=(node python@3.13 git gettext)
 
 for i in "${!deps[@]}"; do
     if command -v "${deps[$i]}" &>/dev/null; then
@@ -90,7 +90,7 @@ fi
 # ============================================================
 # Step 3: Install OpenClaw
 # ============================================================
-step "Step 3/11: OpenClaw Framework"
+step "Step 3/12: OpenClaw Framework"
 
 if command -v openclaw &>/dev/null; then
     log "OpenClaw already installed: $(openclaw --version 2>/dev/null || echo 'installed')"
@@ -103,7 +103,7 @@ fi
 # ============================================================
 # Step 4: Initialize OpenClaw directory structure
 # ============================================================
-step "Step 4/11: Directory Structure"
+step "Step 4/12: Directory Structure"
 
 OPENCLAW_HOME="$HOME/.openclaw"
 mkdir -p "$OPENCLAW_HOME"/{logs,scripts,shared,agents/main/agent,agents/observer/agent}
@@ -117,7 +117,7 @@ log "Directory structure created at $OPENCLAW_HOME"
 # ============================================================
 # Step 5: Deploy agent workspaces
 # ============================================================
-step "Step 5/11: Agent Workspaces"
+step "Step 5/12: Agent Workspaces"
 
 # Nexus (main)
 for f in SOUL.md IDENTITY.md TOOLS.md AGENTS.md HEARTBEAT.md USER.md; do
@@ -154,14 +154,14 @@ done
 # ============================================================
 # Step 6: Generate openclaw.json
 # ============================================================
-step "Step 6/11: Configuration"
+step "Step 6/12: Configuration"
 
 bash "$SCRIPT_DIR/config/generate-config.sh"
 
 # ============================================================
 # Step 7: Deploy Observer Pipeline
 # ============================================================
-step "Step 7/11: Observer Pipeline"
+step "Step 7/12: Observer Pipeline"
 
 # Deploy collection scripts
 for script in collect.py daily.py requirements.txt; do
@@ -196,14 +196,25 @@ fi
 # ============================================================
 # Step 8: Deploy OpenViking Knowledge Base
 # ============================================================
-step "Step 8/11: OpenViking Knowledge Base"
+step "Step 8/12: OpenViking Knowledge Base"
 
 bash "$SCRIPT_DIR/openviking/setup.sh" || warn "OpenViking setup had issues. Run manually: ./openviking/setup.sh"
 
 # ============================================================
-# Step 9: Deploy Shared State & Signal Loop
+# Step 9: DingTalk Bridge (Optional)
 # ============================================================
-step "Step 9/11: Shared State & Signal Loop"
+step "Step 9/12: DingTalk Bridge (Optional)"
+
+if [[ "${DINGTALK_ENABLED:-false}" == "true" ]]; then
+    bash "$SCRIPT_DIR/dingtalk/setup.sh" || warn "DingTalk setup had issues."
+else
+    log "DingTalk bridge not enabled (set DINGTALK_ENABLED=true in .env)"
+fi
+
+# ============================================================
+# Step 10: Deploy Shared State & Signal Loop
+# ============================================================
+step "Step 10/12: Shared State & Signal Loop"
 
 # Shared STATE.yaml
 if [[ ! -f "$OPENCLAW_HOME/shared/STATE.yaml" ]]; then
@@ -214,9 +225,9 @@ else
 fi
 
 # ============================================================
-# Step 10: Deploy Scripts & Services
+# Step 11: Deploy Scripts & Services
 # ============================================================
-step "Step 10/11: Scripts & Services"
+step "Step 11/12: Scripts & Services"
 
 # Copy operational scripts
 for script in healthcheck.py logrotate.sh status-check.sh morning-briefing.sh; do

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>ai.openclaw.dingtalk</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>__HOME__/.openclaw/dingtalk-bridge/.venv/bin/python3</string>
+        <string>__HOME__/.openclaw/dingtalk-bridge/bridge.py</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>__HOME__/.openclaw/logs/dingtalk.log</string>
+    <key>StandardErrorPath</key>
+    <string>__HOME__/.openclaw/logs/dingtalk.err.log</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>HOME</key>
+        <string>__HOME__</string>
+        <key>DINGTALK_APP_KEY</key>
+        <string>__DINGTALK_APP_KEY__</string>
+        <key>DINGTALK_APP_SECRET</key>
+        <string>__DINGTALK_APP_SECRET__</string>
+        <key>GATEWAY_URL</key>
+        <string>http://127.0.0.1:__GATEWAY_PORT__</string>
+        <key>GATEWAY_AUTH_TOKEN</key>
+        <string>__GATEWAY_AUTH_TOKEN__</string>
+    </dict>
+</dict>
+</plist>
