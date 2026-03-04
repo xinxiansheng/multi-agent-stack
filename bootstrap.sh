@@ -259,7 +259,7 @@ bash "$SCRIPT_DIR/launchd/install.sh"
 # ============================================================
 # Step 11: Verification
 # ============================================================
-step "Step 11/11: Verification"
+step "Step 12/12: Verification"
 
 echo "Running health checks..."
 
